@@ -1,5 +1,5 @@
 import pyomo.environ as pyo
-from pyomo.environ import Binary, NonNegativeReals, minimize
+from pyomo.environ import Binary, NonNegativeReals, maximize
 import gurobipy
 import numpy as np
 import random
@@ -59,7 +59,7 @@ class MultiUser():
         multi_user.T_len = pyo.RangeSet(0, self.t_len-1)
         multi_user.use_flag = pyo.Var(multi_user.users, multi_user.T_len, domain=pyo.Binary)
         multi_user.use_power = pyo.Var(multi_user.users, multi_user.T_len, within=NonNegativeReals)
-        multi_user.grid_use = pyo.Var(multi_user.users, multi_user.T_len, within=NonNegativeReals)
+        multi_user.grid_use = pyo.Var(multi_user.users, multi_user.T_len, within=NonNegativeReals, bounds=(0, 3000))
         multi_user.solar_use = pyo.Var(multi_user.users, multi_user.T_len, within=NonNegativeReals)
 
         # info collection
@@ -79,7 +79,7 @@ class MultiUser():
         multi_user.t1_use = pyo.Constraint(multi_user.users, multi_user.T_len, rule=t1_use_rule)
 
         def fre_use_rule(m, us):
-            return sum(m.use_flag[us, t] for t in m.T_len) >= user_use_freq[us]
+            return sum(m.use_flag[us, t] for t in m.T_len) == user_use_freq[us]
         multi_user.fre_use = pyo.Constraint(multi_user.users, rule=fre_use_rule)
 
         def early_start_rule(m, us):
@@ -91,21 +91,22 @@ class MultiUser():
         multi_user.late_stop = pyo.Constraint(multi_user.users, rule=late_stop_rule)
 
         def _solar_use_rule(m, t):
-            return sum(m.use_flag[us, t] for us in m.users) <= use_pv[t]
+            return sum(m.solar_use[us, t] for us in m.users) <= use_pv[t]
         multi_user._solar_use = pyo.Constraint(multi_user.T_len, rule=_solar_use_rule)
 
-        def total_use_rule(m, t):
-            return sum(m.solar_use[us, t] + m.grid_use[us, t]for us in m.users) == sum(m.use_power[us, t] * m.use_flag[us, t] for us in m.users)
-        multi_user.total_use_ = pyo.Constraint(multi_user.T_len, rule=total_use_rule)
+        def total_use_rule(m, us, t):
+            return m.solar_use[us, t] + m.grid_use[us, t] == m.use_power[us, t] * m.use_flag[us, t]
+        multi_user.total_use_ = pyo.Constraint(multi_user.users, multi_user.T_len, rule=total_use_rule)
 
         def total_sum_rule(m, us):
-            return sum(m.use_power[us, t] * m.use_flag[us, t] for t in m.T_len) == user_1t_use[us]*user_use_freq[us]
+            print(user_use_freq[us])
+            return sum(m.use_power[us, t] for t in m.T_len) == user_1t_use[us]*user_use_freq[us]
         multi_user.total_sum = pyo.Constraint(multi_user.users, rule=total_sum_rule)
 
         def obj_rule(multi_user):
-            power_obj = sum(0.12*multi_user.grid_use[us, t] + 0.06*multi_user.solar_use[us, t] for us in multi_user.users for t in multi_user.T_len)
+            power_obj = sum(1*multi_user.grid_use[us, t] + 5*multi_user.solar_use[us, t] for us in multi_user.users for t in multi_user.T_len)
             return power_obj
-        multi_user.obj = pyo.Objective(rule=obj_rule, sense=minimize)
+        multi_user.obj = pyo.Objective(rule=obj_rule, sense=maximize)
 
         return multi_user
 
@@ -120,3 +121,9 @@ opt.options['NumericFocus'] = 3
 result = opt.solve(model).write()
 model.solar_use.pprint()
 model.grid_use.pprint()
+# debug model
+# model.write("model.lp", io_options={"symbolic_solver_labels": True})
+# model = gurobipy.read("model.lp")
+# model.params.NonConvex = 2
+# model.computeIIS()
+# model.write("model.ilp")
