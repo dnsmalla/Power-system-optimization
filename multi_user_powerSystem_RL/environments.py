@@ -49,8 +49,8 @@ class Environment:
                                     20, 0, 0, 0, 0, 0),
                        "Grid_price": 10,
                        "agent1": [600, 5, 19, 19, 0],  # [kWh/h, operation time, operation limit]
-                       "agent2": [25, 9, 15, 23, 7],
-                       "agent3": [1, 8, 16, 20, 7]}
+                       "agent2": [125, 9, 15, 23, 7],
+                       "agent3": [50, 8, 16, 20, 7]}
 
         """
         self.config = { "SolarPV":[150, 150, 150, 150, 150, 150,
@@ -122,7 +122,7 @@ class Environment:
                 self.agent3_act.append(self.operate[2])
         # reward calculation
         cost: int = 0
-        balance = 10*(self.supply/1000)-10*(0.6 * self.flag[0] * self.finish_oper[0] + 0.025 * self.flag[1] * self.finish_oper[1] + 0.001 * self.flag[2] * self.finish_oper[2])
+        balance = 10*(self.supply/1000)-10*(0.6 * self.flag[0] * self.finish_oper[0] + 0.125 * self.flag[1] * self.finish_oper[1] + 0.05 * self.flag[2] * self.finish_oper[2])
         # if 5 < self.agent1_act.count(1)<6  or 4 < self.agent2_act.count(1) < 7 or 4 < self.agent3_act.count(1) < 7:
         #     balance += 1
         # self._reset_total_supply(balance)
