@@ -16,7 +16,7 @@ class EPlot():
     """
 
     def __init__(self, actions: List=[],inf_cls=None) -> None:
-        self.plot_path = "./plot_ouput/"
+        self.plot_path = "./plot_ouput/env_plot/"
         os.makedirs(self.plot_path, exist_ok=True)
         self.actions = actions
         self.u_class = inf_cls
@@ -65,6 +65,14 @@ class EPlot():
                 ax[0].set_xlim(-0.5, self.t-0.5)
                 h1, l1 = ax[0].get_legend_handles_labels()
                 ax[0].legend(h1, l1, prop={'size': 16}, bbox_to_anchor=(0, 1), loc='upper left')
+            if s_n==1:
+                use_power = np.array([[self.actions[us][t]*self.u_class.config[self.u_class.agents[us]][0] for us in range(self.us)]for t in range(self.t)])
+                use_p =pd.DataFrame(use_power.T,columns=["user-1","user-2","user-3"])
+                x_axis = list(range(self.t))
+                ax[1].plot(x_axis, np.sum(use_power,axis=0), "r-*")
+                ax[1].set_xlim(-0.5, self.t-0.5)
+                ax = use_p.plot(kind='bar', stacked=True, ax = ax[1],rot=0)
+
 
         fig.tight_layout()
         plt.savefig(self.plot_path+"Power-available.png")
