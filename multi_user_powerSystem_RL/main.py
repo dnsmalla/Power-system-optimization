@@ -125,12 +125,8 @@ for episode in tqdm.trange(args.num_episode):
             agent2_log.append(agent2_episode_log)
             agent3_log.append(agent3_episode_log)
             break
-    np.save('./reward_log/reward_log_{0}'.format("0620"), reward_log)  # plot用
     np.save('./reward_log/episode_reward_log_{0}'.format("0620"), episode_reward_log)  # plot用
-    np.save('./config_nums', config_nums)  # plot用
-    np.save('./action_log/agent1_action_price_log_{0}'.format("0620"), agent1_log)  # plot用
-    np.save('./action_log/agent2_action_price_log_{0}'.format("0620"), agent2_log)  # plot用
-    np.save('./action_log/agent3_action_price_log_{0}'.format("0606"), agent3_log)  # plot用
+
     if episode > 40 and episode % 4 == 0:
         agent.update()
     episode_rewards.append(episode_reward)
@@ -157,14 +153,17 @@ data.to_excel('rewardepisodes.xlsx', sheet_name='sheet1', index=False)
 
 print("args", args)
 print('maximum ep was', max_ep)
-print(np.array([max_sc_1,
+actions =np.array([max_sc_1,
                 max_sc_2,
-                max_sc_3]))
+                max_sc_3])
+print(actions)
 episode_reward_log = np.load('./reward_log/episode_reward_log_0620.npy', allow_pickle=True)
 pyplot.plot(episode_reward_log)
 pyplot.show()
 pyplot.plot
 episode_reward_log2 = pd.DataFrame(episode_reward_log)
 t_average = episode_reward_log2.rolling(window=100).mean()
-plt.plot(t_average, 'k-', label='moving ave reward')
-plt.show()
+# plt.plot(t_average, 'k-', label='moving ave reward')
+# plt.show()
+from env_vis import EPlot
+EPlot(actions, env)
